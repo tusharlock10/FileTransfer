@@ -15,12 +15,13 @@ even modify it as per your needs.
 
 ## Getting Started
 This is not a python module, but an end-user program. The source 
-code is available here, you can simply download it use it. But for 
-Windows users, you can either download python from 
-[here](https://www.python.org/downloads/). Python is already installed on
-Linux/ macOS systems, also, this script is compatible with both, Python 3.x and 2.x.
+code is available here, you can simply download it use it. 
 
-For Windows users, you can download this source code and download Python with it,
-or you can also download the executable file from [here](Link-to-be-added-soon).
+For ***Linux / macOS*** - You have to download the source code
+from here and run ```main.py```. It is compatible for Python 2 & 3
+which comes pre-installed on both systems. 
+
+For ***Windows*** - Python is not pre-installed on Windows, so you have
+to download it 
 
 
