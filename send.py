@@ -21,7 +21,7 @@ def get_files():
 
 host=''
 while True:
-    host = input('Enter IP Address of the reciever :')#gethostbyname(gethostname()) # set to IP address of target computer
+    host = input('Enter IP Address of the reciever :') # set to IP address of target computer
     if host in ['Q', 'q', 'QUIT','quit','exit','e']:break
     port = 13000
     addr = (host, port)
