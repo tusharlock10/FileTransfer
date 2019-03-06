@@ -7,6 +7,25 @@ DIRECTORY='Send'
 
 os.makedirs(DIRECTORY, exist_ok=1)
 
+help_sender='''
+    ** HELP **
+
+ Firstly make sure that the other PC/ Laptop is ready to 
+ receive files! Make sure that they are running the 
+ ** RECEIVER ** program!
+
+ To send files, copy paste those files, in the Send folder.
+
+ The program has created the Send folder in same directory in
+ which the program is present...
+
+ Press Enter when you have pasted your files in the Send folder... 
+'''
+input(help_sender)
+
+
+
+
 class Sender:
     global DIRECTORY
 
