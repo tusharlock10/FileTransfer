@@ -80,28 +80,24 @@ class Sender:
             size=os.path.getsize(file)
             file=file.strip(os.path.dirname(DIRECTORY))
             D.update({file:size})
-
         return D
 
     def send_info(self):
         '''Sends the files metadata to the receiver'''
-        data=self.files
-        D={}    # Now replacing Send in file paths with Received
-        for file in data:
+
+        D={}
+        for file in self.files:
             x=file
-            file_name=os.path.basename(x)
-            x=x.strip(file_name)
-            x=x.strip(os.path.basename(x))
-            x=os.pathh.join(x, 'Received')
+            dirname=os.path.dirname(sys.argv[0])
+            to_remove=os.path.join(dirname,DIRECTORY)
+            #print('\n',to_strip,x)
+            x=x.replace(to_remove,'')
+            temp={x:self.files[file]}
+            #print(temp,'\n')
+            D.update(temp)
 
 
-
-
-
-
-
-
-        data=json.dumps()
+        data=json.dumps(D)
         data=data.encode()
         data=zlib.compress(data)
         print('Starting transfer -')

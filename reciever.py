@@ -50,11 +50,15 @@ class Receiver:
         return files
 
     def __get_file(self, file):
-        dirname=os.path.dirname(file)
-        os.makedirs(dirname, exist_ok=1)
+        
+        
 
         tt=time.time()
-        f=open(file,'wb')
+        file_new=DIRECTORY+file
+        dirname=os.path.dirname(file_new)
+        os.makedirs(dirname, exist_ok=1)
+
+        f=open(file_new,'wb')
         while 1:
             data, addr = self.socket.recvfrom(self.buff)
             f.write(data)
@@ -72,7 +76,7 @@ class Receiver:
         except:
             s="file was small, didn't do measurements! "
 
-        if os.path.getsize(file)==self.files[file]:
+        if os.path.getsize(file_new)!=self.files[file]:
             error='  THE RECIEVED FILE WAS CORRUPT, RETRY FOR THIS FILE...'
             error= tj.color_text(error, text_color='RED')
         else:
@@ -85,12 +89,13 @@ class Receiver:
 
     def get_files(self):
         for file in self.files:
-            print(f'Receiveing file: {file}',end='')
+            print(f'Receiveing file: {DIRECTORY+file}',end='')
             self.__get_file(file)
 
     def close(self):
-        print('Files recieved, Closing the connection!')
+        print('\nFiles recieved, Closing the connection and quitting!')
         self.socket.close()
+        input('Enter to quit...')
 
 
 
