@@ -1,7 +1,10 @@
-import os,sys, tj
+import os
+import sys
+import tj
+
 os.chdir(os.path.dirname(sys.argv[0]))
 
-logo=r'''
+logo = r'''
 ----------------------------------+
    ___                            |                _     
   / __|    ___    _ _     _ _      ___     __     | |_   
@@ -18,30 +21,27 @@ _|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|
 
 '''
 
-main_menu=f'''
-{logo}
-
+main_menu = '''
+%s
 
  * MAIN MENU *
 
  1) SEND FILES
  2) RECEIVE FILES
  3) QUIT
-'''
+''' % logo
 
-msg='Enter your choice from 1-3: '
+msg = 'Enter your choice from 1-3: '
 while 1:
-    choice=input(msg).upper()
+    choice = input(msg).upper()
 
-    if choice =='1':
-        import sender
+    if choice == '1':
         break
     elif choice == '2':
-        import receiver
         break
-    elif choice in ['3','Q','QUIT','E']:
-        bye=tj.color_text('\n * GOOD BYE *', text_color='PURPLE', background_color='WHITE')
-        input(bye+', Enter to quit...')
+    elif choice in ['3', 'Q', 'QUIT', 'E']:
+        bye = tj.color_text('\n * GOOD BYE *', text_color='PURPLE', background_color='WHITE')
+        input(bye + ', Enter to quit...')
         break
     else:
-        msg='Enter only numbers from 1-3: '
+        msg = 'Enter only numbers from 1-3: '
