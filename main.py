@@ -42,14 +42,16 @@ while 1:
     choice = input(msg).upper()
 
     if choice == '1':
+        import sender
         break
     elif choice == '2':
+        import receiver
         break
     elif choice in ['3', 'Q', 'QUIT', 'E']:
         print()
         bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE', background_color='WHITE')
-        print()
-        input(bye + ', Enter to quit...')
+        print(bye)
+        input('Enter to quit...')
         break
     else:
         msg = 'Enter only numbers from 1-3: '
