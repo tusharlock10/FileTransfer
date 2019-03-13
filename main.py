@@ -2,7 +2,11 @@ import os
 import sys
 import tj
 
-os.chdir(os.path.dirname(sys.argv[0]))
+dirname=os.path.dirname(sys.argv[0])
+if dirname!="":os.chdir(dirname)
+
+clear="cls"
+if 'win32' not in sys.platform.lower():clear='clear'
 
 logo = r'''
 ----------------------------------+
@@ -33,6 +37,8 @@ main_menu = '''
 
 msg = 'Enter your choice from 1-3: '
 while 1:
+    os.system(clear)
+    print(main_menu)
     choice = input(msg).upper()
 
     if choice == '1':
@@ -40,7 +46,9 @@ while 1:
     elif choice == '2':
         break
     elif choice in ['3', 'Q', 'QUIT', 'E']:
-        bye = tj.color_text('\n * GOOD BYE *', text_color='PURPLE', background_color='WHITE')
+        print()
+        bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE', background_color='WHITE')
+        print()
         input(bye + ', Enter to quit...')
         break
     else:

@@ -8,7 +8,8 @@ from socket import *
 
 import tj
 
-os.chdir(os.path.dirname(sys.argv[0]))
+dirname=os.path.dirname(sys.argv[0])
+if dirname!="":os.chdir(dirname)
 
 DIRECTORY = 'Received'
 

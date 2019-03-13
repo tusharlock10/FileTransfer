@@ -7,7 +7,8 @@ from socket import *
 
 import tj
 
-os.chdir(os.path.dirname(sys.argv[0]))
+dirname=os.path.dirname(sys.argv[0])
+if dirname!="":os.chdir(dirname)
 
 DIRECTORY = 'Send'
 
@@ -141,6 +142,8 @@ class Sender:
         t = time.time()
         while True:
             data = f.read(self.buff)  # data here will be binary, already
+            time.sleep(0.00013)     # Small transfer buffer, to ensure that buffer
+                                    # is transfered properly
             self.socket.sendto(data, self.addr)
             if data == b'':
                 break
