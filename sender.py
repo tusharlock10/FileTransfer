@@ -10,9 +10,6 @@ import tj
 dirname=os.path.dirname(sys.argv[0])
 if dirname!="":os.chdir(dirname)
 
-DIRECTORY = 'Send'
-
-os.makedirs(DIRECTORY, exist_ok=1)
 
 help_sender = '''
     ** HELP **
@@ -32,9 +29,10 @@ input(help_sender)
 
 
 class Sender:
-    global DIRECTORY
-
     def __init__(self, files=None):
+        self.DIRECTORY = 'Send'
+        os.makedirs(self.DIRECTORY, exist_ok=1)
+
         print('  ** SENDER **')
         print('This module will send files to the receiver...\n')
         self.host = self.__get_host()
@@ -98,12 +96,12 @@ class Sender:
         if files != None:
             return {files: os.path.getsize(file)}
 
-        L = tj.get_files_in_folder(DIRECTORY)
+        L = tj.get_files_in_folder(self.DIRECTORY)
         D = {}
         for i in L:
             file = i
             size = os.path.getsize(file)
-            file = file.strip(os.path.dirname(DIRECTORY))
+            file = file.strip(os.path.dirname(self.DIRECTORY))
             D.update({file: size})
         return D
 
@@ -114,7 +112,7 @@ class Sender:
         for file in self.files:
             x = file
             dirname = os.path.dirname(sys.argv[0])
-            to_remove = os.path.join(dirname, DIRECTORY)
+            to_remove = os.path.join(dirname, self.DIRECTORY)
             # print('\n',to_strip,x)
             x = x.replace(to_remove, '')
             temp = {x: self.files[file]}

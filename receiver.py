@@ -11,15 +11,12 @@ import tj
 dirname=os.path.dirname(sys.argv[0])
 if dirname!="":os.chdir(dirname)
 
-DIRECTORY = 'Received'
-
-os.makedirs(DIRECTORY, exist_ok=1)
-
 
 class Receiver:
-    global DIRECTORY
-
     def __init__(self):
+        self.DIRECTORY = 'Received'
+        os.makedirs(self.DIRECTORY, exist_ok=1)
+
         print('  ** RECEIVER **')
         print('This module will Receive files ...\n')
 
@@ -60,7 +57,7 @@ class Receiver:
     def __get_file(self, file):
 
         tt = time.time()
-        file_new = DIRECTORY + file
+        file_new = self.DIRECTORY + file
         dirname = os.path.dirname(file_new)
         os.makedirs(dirname, exist_ok=1)
 
@@ -94,7 +91,7 @@ class Receiver:
 
     def get_files(self):
         for file in self.files:
-            print('Receiving file: %s' % (DIRECTORY + file), end='')
+            print('Receiving file: %s' % (self.DIRECTORY + file), end='')
             self.__get_file(file)
 
     def close(self):
