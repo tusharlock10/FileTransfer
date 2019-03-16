@@ -1,34 +1,34 @@
 import json
 import os
-import random
 import sys
-import time
-import zlib
+import zlib, time
 from socket import *
 
 import tj
 
-dirname=os.path.dirname(sys.argv[0])
-if dirname!="":os.chdir(dirname)
+try:
+    os.chdir(os.path.dirname(sys.argv[0]))
+except:
+    pass
+
+DIRECTORY = 'Received'
+os.makedirs(DIRECTORY, exist_ok=True)
 
 
 class Receiver:
     def __init__(self):
-        self.DIRECTORY = 'Received'
-        os.makedirs(self.DIRECTORY, exist_ok=1)
-
-        print('  ** RECEIVER **')
-        print('This module will Receive files ...\n')
-
         self.host = self.__get_host()
-        self.port = self.__get_port()
-        print('\nEnter both of these correctly in the sender...')
-        self.addr = (self.host, self.port)
-        self.buff = 8 * 1024  # Its buffer is a little more than sender, to avoid the files getting corrupt
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.socket.bind(self.addr)
-        self.files = self.get_info()
-        self.wait_buffer = 0.3
+        self.port = 12345  # Port number
+        self.buffer = 1400
+
+        self.socket = socket(AF_INET, SOCK_STREAM)
+        self.socket.bind((self.host, self.port))
+        self.socket.listen(1)
+
+        self.partner, self.partner_addr = self.socket.accept()
+        print(f'{gethostbyaddr(self.partner_addr[0])[0]} ({self.partner_addr[0]}) is now connected')
+        #self.partner.setblocking(False)
+        self.partner.settimeout(0.05)
 
     @staticmethod
     def __get_host():
@@ -38,68 +38,142 @@ class Receiver:
         return ip
 
     @staticmethod
-    def __get_port():
-        port = random.choice(list(range(3000, 30001)))
-        print('The port number is: %s' % port)
-        return port
+    def convert_to_percent(num, total):
+        percent=num*100/total
+        return int(percent)
 
-    def get_info(self):
-        '''Gets the files metadata from sender'''
-        data, addr = self.socket.recvfrom(self.buff)  # Here files is in cmp, bin, json
-        print('Got the metadata...')
-        data = zlib.decompress(data)  # bin, json
-        # print(data)
-        data = data.decode()  # json left
-        files = json.loads(data)  # files dictionary {file_1 : size_1,   file_2 : size_2 ...}
+    @staticmethod
+    def show_progress(percent, time_elapsed=0, got_data=0):
+        '''Display progress of percentage out of 50'''
 
-        return files
+        if percent!=100:
+            try:
+                speed=got_data//time_elapsed
+                speed=tj.convert_bytes(speed)+r'/s'
+            except:
+                speed='N/A'
+            print('  --  %-50s %s | Speed: %s' % ('#'*(percent//2), f'{percent}%', speed), end='\r')
+        else:
+            print('%s' % ' '*85, end='\r')
 
-    def __get_file(self, file):
+        return percent
 
-        tt = time.time()
-        file_new = self.DIRECTORY + file
-        dirname = os.path.dirname(file_new)
-        os.makedirs(dirname, exist_ok=1)
 
-        f = open(file_new, 'wb')
-        while 1:
-            data, addr = self.socket.recvfrom(self.buff)
-            f.write(data)
-            if data == b'':
-                break
-        f.close()
+    @staticmethod
+    def convert_D(D):
+        D_new = {}
+        for i in D:
+            value = D[i]
+            if 'win32' in sys.platform:
+                filename = os.path.abspath(DIRECTORY + '\\' + i)
+            else:
+                filename = DIRECTORY + i
+            temp = {filename: value}
+            D_new.update(temp)
+        return D_new
 
-        tt = (time.time() - tt)
-        size = self.files[file]
+
+    def get_files_metadata(self):
+        data_compressed = b''
+        self.partner.settimeout(None)
+        run = True
+        while run:
+            try:
+                i = self.partner.recv(self.buffer)
+            except:
+                run = False
+            self.partner.settimeout(0.05)
+            if i == b'': run = False
+            data_compressed += i
 
         try:
-            speed = tj.convert_bytes(size // tt)
-            tt = round(tt, 3)
-            s = 'took %ss, avg. speed - %s/s' % (tt, speed)
+            data = zlib.decompress(data_compressed).decode()
+            print('Metadata is intact')
+            error = b'CONFIRMED'
         except:
-            s = "file was small, didn't do measurements! "
+            print('Metadata is corrupt')
+            error = b'CORRUPT'
+            data = '{}'
+        self.partner.send(error)
+        D = json.loads(data)
 
-        if os.path.getsize(file_new) != self.files[file]:
-            error = '  THE RECEIVED FILE WAS CORRUPT, RETRY FOR THIS FILE...'
-            error = tj.color_text(error, text_color='RED')
+        D_new = self.convert_D(D)
+        return D_new
+
+    def get_buffer(self, size_remaining):
+        b = self.buffer
+        if size_remaining < b:
+            return size_remaining
         else:
-            error = '  File is successfully received...'
-            error = tj.color_text(error, text_color='GREEN')
+            return b
 
-        print(' | Received, %s' % s, end='\n')
-        print('%s' % error)
+    def get_file(self, filename, size):  # size in bytes
 
-    def get_files(self):
-        for file in self.files:
-            print('Receiving file: %s' % (self.DIRECTORY + file), end='')
-            self.__get_file(file)
+        ## Make dir for file
+        dirname = os.path.dirname(filename)
+        os.makedirs(dirname, exist_ok=True)
+        ## -------------
+
+        size_remaining = size
+        print(os.path.abspath(filename))
+        f = open(filename, 'wb')
+
+        done = 0
+        done_percent=None
+        t=time.time()
+        got_data=0
+
+        while size_remaining:
+            var_buffer = self.get_buffer(size_remaining)
+            data = self.partner.recv(var_buffer)
+
+            l=len(data)
+            done += l
+            got_data += l
+            percent=self.convert_to_percent(done, size)
+
+            if percent != done_percent:
+                time_elapsed = time.time()-t
+                self.show_progress(percent, time_elapsed, got_data)
+
+                done_percent = percent
+                got_data=0
+                t=time.time()
+
+
+
+            f.write(data)
+            f.flush()
+            size_remaining -= var_buffer
+
+        f.close()
+        self.show_progress(100)
+        print('I got', done, 'bytes')
+        if done == size:
+            return True
+        else:
+            return False
+
+    def get_files(self, D):
+        n = len(D)
+        self.partner.settimeout(None)
+        for i, file in enumerate(list(D.keys())):
+            
+            size = D[file]
+            size_fancy = tj.convert_bytes(size)
+            print(f'\n Receiving file {i + 1}/{n}\n\t{file} - ({size_fancy})')
+            result = self.get_file(file, size)
+
+            if result:
+                print(' Received file successfully')
+            else:
+                print(' --- FILE RECEIVED IS CORRUPT ---')
 
     def close(self):
-        print('\nFiles received, Closing the connection and quitting!')
-        self.socket.close()
-        input('Enter to quit...')
+        self.partner.close()
 
-
+t=time.time()
 R = Receiver()
-R.get_files()
+D = R.get_files_metadata()
+R.get_files(D)
 R.close()

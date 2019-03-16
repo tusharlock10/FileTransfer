@@ -1,178 +1,189 @@
 import json
 import os
 import sys
-import time
-import zlib
+import zlib, time
 from socket import *
 
 import tj
 
-dirname=os.path.dirname(sys.argv[0])
-if dirname!="":os.chdir(dirname)
+try:
+    os.chdir(os.path.dirname(sys.argv[0]))
+except:
+    pass
 
-
-help_sender = '''
-    ** HELP **
-
- Firstly make sure that the other PC/ Laptop is ready to 
- receive files! Make sure that they are running the 
- ** RECEIVER ** program!
-
- To send files, copy paste those files, in the Send folder.
-
- The program has created the Send folder in same directory in
- which the program is present...
-
- Press Enter when you have pasted your files in the Send folder... 
-'''
-input(help_sender)
+DIRECTORY = 'Send'
+os.makedirs(DIRECTORY, exist_ok=True)
 
 
 class Sender:
-    def __init__(self, files=None):
-        self.DIRECTORY = 'Send'
-        os.makedirs(self.DIRECTORY, exist_ok=1)
+    def __init__(self):
+        self.server_host = gethostbyname(gethostname())  # '192.168.225.56'  # IP of this server
+        # self.server_host = '192.168.225.24'
+        self.port = 12345  # Port number
+        self.buffer = 1400
 
-        print('  ** SENDER **')
-        print('This module will send files to the receiver...\n')
-        self.host = self.__get_host()
-        self.port = self.__get_port()
-        self.files = self.get_files(files)  # A dictionary with names of all the files : file_size
-        self.addr = (self.host, self.port)
-        self.buff = 8 * 1000  # Buffer, it should be 2*1024,
-        # but I found that 2*1000 in sender.py give less corrupt files
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.wait_buffer = 0.3
+        self.socket = socket(AF_INET, SOCK_STREAM)
+        self.socket.connect((self.server_host, self.port))
+        self.files_to_send = None
+        print(f'Connected to {gethostbyaddr(self.server_host)[0]} ({self.server_host})')
 
-    @staticmethod
-    def __validate_ip(address):
-        try:
-            host_bytes = address.split('.')
-            valid = [int(b) for b in host_bytes]
-            valid = [b for b in valid if b >= 0 and b <= 255]
-            return len(host_bytes) == 4 and len(valid) == 4
-        except:
-            return False
+    def get_files_to_send(self):
+        L_send = os.listdir(DIRECTORY)
+        dirname = os.path.abspath(DIRECTORY)
+        if L_send:
+            L = tj.get_files_in_folder(DIRECTORY)
 
-    def __get_host(self):
-        msg = 'Enter the IP Address of the receiver: '
-        while True:
-            host = input(msg)
-            if host.upper() in ['Q', 'QUIT', 'E', 'EXIT']:
-                input('\n -- PRESS ENTER TO QUIT --')
-                sys.exit()
+        else:
+            msg = 'Enter the full path of the file/ folder to send: '
+            dirname = None
+            while True:
+                path = input(msg)
+                if path.lower() in ['e', 'q', 'exit', 'quit']:
+                    break
+                if os.path.isdir(path):
+                    L = tj.get_files_in_folder(path)
+                    dirname = os.path.dirname(path)
+                    break
 
-            if not self.__validate_ip(host):
-                msg = '%s is not a correct IP Address, \
-                enter again carefully (enter Q to quit): ' % host
-                continue
-            break
-        print('%s seems to be a valid IP Address, connecting to it...\n' % host)
-        return host
+                elif os.path.isfile(path):
+                    L = [path]
+                    dirname = os.path.dirname(path)
+                    break
+                else:
+                    msg = 'Invalid path, Enter again (q to quit): '
 
-    @staticmethod
-    def __get_port():
-        msg = 'Enter the port number: '
-        while True:
-            port = input(msg)
-            if port.upper() in ['Q', 'QUIT', 'E', 'EXIT']:
-                input('\n -- PRESS ENTER TO QUIT --')
-                sys.exit()
-
-            if not port.isdigit():
-                msg == 'Enter only numbers (enter Q to quit): '
-                continue
-
-            port = int(port)
-            if not 3000 < port < 30000:
-                msg = 'Port number is invalid, enter correct port number (enter Q to quit): '
-                continue
-            break
-
-        print('%s seems to be a valid port number, connecting to it...\n' % port)
-        return port
-
-    def get_files(self, files):
-        if files != None:
-            return {files: os.path.getsize(file)}
-
-        L = tj.get_files_in_folder(self.DIRECTORY)
         D = {}
         for i in L:
-            file = i
-            size = os.path.getsize(file)
-            file = file.strip(os.path.dirname(self.DIRECTORY))
-            D.update({file: size})
+            D.update({i.replace(dirname, ''): os.path.getsize(i)})
+        self.files_to_send = L
+
         return D
+    
+    @staticmethod
+    def convert_to_percent(num, total):
+        percent=num*100/total
+        return int(percent)
 
-    def send_info(self):
-        '''Sends the files metadata to the receiver'''
+    @staticmethod
+    def show_progress(percent, time_elapsed=0, got_data=0):
+        '''Display progress of percentage out of 50'''
 
-        D = {}
-        for file in self.files:
-            x = file
-            dirname = os.path.dirname(sys.argv[0])
-            to_remove = os.path.join(dirname, self.DIRECTORY)
-            # print('\n',to_strip,x)
-            x = x.replace(to_remove, '')
-            temp = {x: self.files[file]}
-            # print(temp,'\n')
-            D.update(temp)
+        if percent!=100:
+            try:
+                speed=got_data//time_elapsed
+                speed=tj.convert_bytes(speed)+r'/s'
+            except:
+                speed='N/A'
+            print('  --  %-50s %s | Speed: %s' % ('#'*(percent//2), f'{percent}%', speed), end='\r')
+        else:
+            print('%s' % ' '*85, end='\r')
 
-        data = json.dumps(D)
-        data = data.encode()
-        data = zlib.compress(data)
-        print('Starting transfer -')
+        return percent
 
-        time.sleep(self.wait_buffer)
-        self.socket.sendto(data, self.addr)
-        print('Metadata sent...')
-        time.sleep(self.wait_buffer)
+    @staticmethod
+    def split_string(string, buffer):
+        L = []
+        i, j = 0, buffer
+        s = '1'
+        while s:
+            s = string[i:j]
+            L += [s]
+            i += buffer
+            j += buffer
+        return L
 
-        if len(data) > 512: time.sleep(
-            self.wait_buffer * 3)  # To make sure that the receiver had processed the metadata
+    def send_files_metadata(self, D):
 
-        if len(data) > 1024: time.sleep(self.wait_buffer * 6)
+        data = json.dumps(D)  # Converted D to json data
+        data_compressed = zlib.compress(data.encode())  # Compressed the data
+        L = self.split_string(data_compressed, self.buffer)
 
-    def __send_file(self, file):
-        '''A helper function for send_files'''
-        f = open(file, 'rb')
-        t = time.time()
-        while True:
-            data = f.read(self.buff)  # data here will be binary, already
-            time.sleep(0.00013)     # Small transfer buffer, to ensure that buffer
-                                    # is transfered properly
-            self.socket.sendto(data, self.addr)
-            if data == b'':
-                break
+        for i in L:
+            self.socket.send(i)
+
+        confirm = self.socket.recv(self.buffer)  # To confirm that metadata is received
+        if confirm == b'CONFIRMED':
+            print('Receiver got the metadata correctly...\n')
+            return True
+        else:
+            print('''Receiver says that the metadata received is incorrect,
+    so apparently, the Receiver doesn't know what files I am sending to him,
+    this might lead to some corrupt data...\n''')
+            return False
+
+    def get_buffer(self, size_remaining):
+        b = self.buffer
+        if size_remaining < b:
+            return size_remaining
+        else:
+            return b
+
+    def send_file(self, filename, size):
+
+        size_remaining = size
+        done=0
+        f = open(filename, 'rb')
+
+        t=time.time()
+        got_data=0
+        done_percent=0
+
+        while size_remaining:
+            #time.sleep(0.005)
+            var_buffer = self.get_buffer(size_remaining)
+            data = f.read(var_buffer)
+            #print(f'NEED TO SEND: {var_buffer} , SENT: {len(data)}')
+            self.socket.send(data)
+
+            l=len(data)
+            done+=l
+            got_data+=l
+            percent=self.convert_to_percent(done, size)
+
+            if percent != done_percent:
+                time_elapsed = time.time()-t
+                self.show_progress(percent, time_elapsed, got_data)
+
+                done_percent = percent
+                got_data=0
+                t=time.time()
+
+            '''received = self.socket.recv(4)
+
+            while received == b'CORR':
+                # This means Receiver got a corrupt package
+                # Now I have to send this package again
+                print(f' At {done}/{size}, Receiver got corrupt package, sending again...')
+                self.socket.send(data)
+                # Package is send again
+                received = self.socket.recv(4)
+                # Lets see if the receiver got this package correctly'''
+
+            size_remaining -= var_buffer
+
         f.close()
-
-        tt = (time.time() - t)
-        size = self.files[file]
-
-        try:
-            speed = tj.convert_bytes(size // tt)
-            tt = round(tt, 3)
-            s = 'took %ss, avg. speed - %s/s' % (tt, speed)
-        except:
-            s = "file was small, didn't do measurements! "
-
-        print(' | Transferred, %s' % s, end='\n\n')
-
-        time.sleep(self.wait_buffer)  # Wait between each new file call
+        return True
 
     def send_files(self):
-        for file in self.files:
-            print('Transferring file: %s' % file, end='')
-            self.__send_file(file)
+        n = len(self.files_to_send)
+        for i, file in enumerate(self.files_to_send):
+            size = os.path.getsize(file)
+            size_fancy = tj.convert_bytes(size)
+            print(f'\n Transferring file {i + 1}/{n} \n\t{file} - ({size})...')
+            result = self.send_file(file, size)
+            if result:
+                print(' File transferred successfully!')
+            else:
+                print(' --- FILE TRANSFER FAILED ---')
+
+            # time.sleep(0.03)
 
     def close(self):
-        print('Transfer complete, Closing the connection!')
         self.socket.close()
-        input('Enter to quit...')
 
 
 S = Sender()
-S.send_info()
+D = S.get_files_to_send()
+S.send_files_metadata(D)
 S.send_files()
 S.close()
