@@ -8,10 +8,8 @@ from socket import *
 
 import tj
 
-try:
-    os.chdir(os.path.dirname(sys.argv[0]))
-except:
-    pass
+dirname = os.path.dirname(sys.argv[0])
+if dirname != '': os.chdir(dirname)
 
 DIRECTORY = 'Received'
 os.makedirs(DIRECTORY, exist_ok=True)
@@ -19,21 +17,21 @@ os.makedirs(DIRECTORY, exist_ok=True)
 
 class Receiver:
     def __init__(self):
-        self.host = self.__get_host()
-        self.port = self.__get_port()
-        self.buffer = 1400
+        self.host = self.__get_host()  # To get the ip address of the Receiver (server)
+        self.port = self.__get_port()  # To get a random port number
+        self.buffer = 1300  # Buffer is set to 1300 to save file from corruption
 
-        self.socket = socket(AF_INET, SOCK_STREAM)
-        self.socket.bind((self.host, self.port))
-        self.socket.listen(1)
+        self.socket = socket(AF_INET, SOCK_STREAM)  # Made TCP socket
+        self.socket.bind((self.host, self.port))  # Binded the socket
+        self.socket.listen(1)  # Only 1 user will connect
 
-        self.partner, self.partner_addr = self.socket.accept()
+        self.partner, self.partner_addr = self.socket.accept()  # Waiting for client to accept
         print(f'{gethostbyaddr(self.partner_addr[0])[0]} ({self.partner_addr[0]}) is now connected')
-        # self.partner.setblocking(False)
         self.partner.settimeout(0.05)
 
     @staticmethod
     def __get_host():
+        '''Function to get the IP address of the Receiver'''
         host = gethostname()
         ip = gethostbyname(host)
         print('The IP Address of Receiver is: %s' % ip)
@@ -41,12 +39,14 @@ class Receiver:
 
     @staticmethod
     def __get_port():
+        '''Gives a random number for port'''
         port = randint(4000, 25000)
         print('The port number of Receiver is: %s' % port)
         return port
 
     @staticmethod
     def convert_to_percent(num, total):
+        '''Converts to percentage'''
         percent = num * 100 / total
         return int(percent)
 
@@ -56,21 +56,23 @@ class Receiver:
 
         if percent != 100:
             try:
-                speed = got_data // time_elapsed
-                speed = tj.convert_bytes(speed) + r'/s'
+                speed = got_data // time_elapsed  # Gets the speed in the "Fancy" format
+                speed = tj.convert_bytes(speed) + r'/s'  # Adds /s to speed
             except:
                 speed = 'N/A'
             print('  --  %-50s %s | Speed: %s' % ('#' * (percent // 2), f'{percent}%', speed), end='\r')
         else:
             print('%s' % ' ' * 85, end='\r')
-
         return percent
 
     @staticmethod
     def convert_D(D):
+        '''Converts the file paths of D, in the correct format'''
         D_new = {}
         for i in D:
             value = D[i]
+
+            # not using os.path.join as it gives incorrect results
             if 'win32' in sys.platform:
                 filename = os.path.abspath(DIRECTORY + '\\' + i)
             else:
@@ -80,9 +82,11 @@ class Receiver:
         return D_new
 
     def get_files_metadata(self):
+        '''Gets the metadata of the file from the Sender'''
         data_compressed = b''
         self.partner.settimeout(None)
         run = True
+        # The metadata is sent in parts, we need to collect it and then join
         while run:
             try:
                 i = self.partner.recv(self.buffer)
@@ -92,33 +96,26 @@ class Receiver:
             if i == b'': run = False
             data_compressed += i
 
-        try:
-            data = zlib.decompress(data_compressed).decode()
-            print('Metadata is intact')
-            error = b'CONFIRMED'
-        except:
-            print('Metadata is corrupt')
-            error = b'CORRUPT'
-            data = '{}'
-        self.partner.send(error)
-        D = json.loads(data)
+        data = zlib.decompress(data_compressed).decode()  # Decompressing the data
+        D = json.loads(data)  # Loading the metadata Dictionary using JSON
 
         D_new = self.convert_D(D)
         return D_new
 
     def get_buffer(self, size_remaining):
+        '''Gives, how huch buffer we need to give to the socket.recv function.
+        Instead of waiting and depending on the Sender, we keep the track of
+        the data which is sent.'''
         b = self.buffer
         if size_remaining < b:
             return size_remaining
         else:
             return b
 
-    def get_file(self, filename, size):  # size in bytes
-
-        ## Make dir for file
-        dirname = os.path.dirname(filename)
-        os.makedirs(dirname, exist_ok=True)
-        ## -------------
+    def get_file(self, filename, size):
+        '''This function gets the file data from the sender'''
+        dirname = os.path.dirname(filename)  # To make the directory of the file
+        os.makedirs(dirname, exist_ok=True)  # Makes the directory of the file
 
         size_remaining = size
         print(os.path.abspath(filename))
@@ -175,10 +172,3 @@ class Receiver:
 
     def close(self):
         self.partner.close()
-
-
-t = time.time()
-R = Receiver()
-D = R.get_files_metadata()
-R.get_files(D)
-R.close()

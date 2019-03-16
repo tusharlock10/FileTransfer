@@ -18,10 +18,10 @@ os.makedirs(DIRECTORY, exist_ok=True)
 
 class Sender:
     def __init__(self):
-        self.server_host = '192.168.225.24'  # self.__get_server_host()
+        self.server_host = self.__get_server_host()
         self.port = self.__get_port()
         pass
-        self.buffer = 1400
+        self.buffer = 1300
 
         self.socket = socket(AF_INET, SOCK_STREAM)
         self.socket.connect((self.server_host, self.port))
@@ -219,10 +219,3 @@ class Sender:
 
     def close(self):
         self.socket.close()
-
-
-S = Sender()
-D = S.get_files_to_send()
-S.send_files_metadata(D)
-S.send_files()
-S.close()

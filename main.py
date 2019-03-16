@@ -1,12 +1,10 @@
 import os
 import sys
+
 import tj
 
-dirname=os.path.dirname(sys.argv[0])
-if dirname!="":os.chdir(dirname)
-
-clear="cls"
-if 'win32' not in sys.platform.lower():clear='clear'
+clear = "cls"
+if 'win32' not in sys.platform.lower(): clear = 'clear'
 
 logo = r'''
 ----------------------------------+
@@ -43,9 +41,21 @@ while 1:
 
     if choice == '1':
         import sender
+
+        S = sender.Sender()
+        D = S.get_files_to_send()
+        S.send_files_metadata(D)
+        S.send_files()
+        S.close()
         break
     elif choice == '2':
         import receiver
+
+        R = receiver.Receiver()
+        D = R.get_files_metadata()
+        R.get_files(D)
+        R.close()
+
         break
     elif choice in ['3', 'Q', 'QUIT', 'E']:
         print()
