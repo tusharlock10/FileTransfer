@@ -16,16 +16,18 @@ except:
 DIRECTORY = 'Send'
 os.makedirs(DIRECTORY, exist_ok=True)
 
+c = tj.color_text  # Making c as tj.color_text
+
 
 def help_sending():
     clear = "cls"
     if 'win32' not in sys.platform.lower(): clear = 'clear'
 
-    help_string = '''
-    
-    * SENDER *
-    
- -- HELP FOR SENDER --
+    help_string = f'''
+        {c("                  ", background_color='WHITE')}
+        {c("    * SENDER *    ", text_color='OLIVE', background_color='WHITE', bold=True)}
+        {c("                  ", background_color='WHITE')}
+\n -- HELP FOR SENDER --
     
 This option will send files to the receiver.
 
@@ -50,14 +52,17 @@ This option will send files to the receiver.
     (2/3) - You will now have to select which files to send. Its pretty
     easy, just copy paste the files/folder which you want to send, in the 
     Send folder which have been created just now in the same directory as
-    this program (here - {dirname}).
-                     ALTERNATEVLY\
-    If the file/folder you want to send is very large, then instead of \
-    copy pasting it, type its path when asked.\
+    this program (here - {dirname}). Copy paste your files/folder in this 
+    folder, before starting the program! Although you can copy paste now,
+    but not after this help ends!!
+                     {c("ALTERNATEVLY", text_color="GREEN", bold=True)}
+    If the file/folder you want to send is very large, then instead of 
+    copy pasting it, type its path when asked.
 
-    * Also, when the files have been send, please delete the Send\
-    folder. Otherwise when you will use this program for the next time, \
-    these files will also be send.\
+    * {c("""Also, when the files have been send, please delete the Send
+    folder""", text_color='OLIVE', bold=True)}\
+. Otherwise when you will use this program for the next time, 
+    these files will also be send.
 
     Enter to go to the next step...'''
 
@@ -70,7 +75,8 @@ This option will send files to the receiver.
     L = [msg1, msg2, msg3]
     for msg in L:
         os.system(clear)
-        input(help_string % msg)
+        choice = input(help_string % msg)
+        if choice.lower() == 'q': sys.exit()
         os.system(clear)
 
 

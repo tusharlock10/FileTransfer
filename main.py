@@ -75,4 +75,4 @@ while 1:
         input('Enter to quit...')
         break
     else:
-        msg = 'Enter only numbers from 1-3: '
+        msg = 'Enter only numbers from 1-3 (or 1h or 2h): '
