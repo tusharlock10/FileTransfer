@@ -7,6 +7,8 @@ from socket import *
 
 import tj
 
+__version__='1.0'
+
 try:
     dirname = os.path.dirname(sys.argv[0])
     os.chdir(dirname)
@@ -17,25 +19,31 @@ DIRECTORY = 'Send'
 os.makedirs(DIRECTORY, exist_ok=True)
 
 c = tj.color_text  # Making c as tj.color_text
+last_speed='0 MB/s'
 
 
 def help_sending():
     clear = "cls"
-    if 'win32' not in sys.platform.lower(): clear = 'clear'
+    if 'win32' not in sys.platform.lower():
+        clear = 'clear'
+        clr='OLIVE'
+    else:
+        clr='BLACK'
 
     help_string = f'''
         {c("                  ", background_color='WHITE')}
-        {c("    * SENDER *    ", text_color='OLIVE', background_color='WHITE', bold=True)}
+        {c("    * SENDER *    ", text_color=clr, background_color='WHITE', bold=True)}
         {c("                  ", background_color='WHITE')}
 \n -- HELP FOR SENDER --
     
 This option will send files to the receiver.
 
  Please make sure that -
+{c("""
  * First the receiver is read to receive files.
  * Files will be send over LAN, so no internet will be used.
  * You and the Receiver are connect to the same network, either 
-    to the same Wifi or using Ethernet.
+    to the same Wifi or using Ethernet.""", text_color='YELLOW', bold=True)}
  
  It is very easy and straight forward to send files, Just 3 steps:
      %s'''
@@ -52,9 +60,9 @@ This option will send files to the receiver.
     (2/3) - You will now have to select which files to send. Its pretty
     easy, just copy paste the files/folder which you want to send, in the 
     Send folder which have been created just now in the same directory as
-    this program (here - {dirname}). Copy paste your files/folder in this 
-    folder, before starting the program! Although you can copy paste now,
-    but not after this help ends!!
+    this program (here - {c(dirname, text_color='PURPLE',bold=True)}). 
+    Copy paste your files/folder in this folder, before starting the program! 
+    Although you can copy paste now, but not after this help ends!!
                      {c("ALTERNATEVLY", text_color="GREEN", bold=True)}
     If the file/folder you want to send is very large, then instead of 
     copy pasting it, type its path when asked.
@@ -82,8 +90,8 @@ This option will send files to the receiver.
 
 class Sender:
     def __init__(self):
-        self.server_host = '192.168.225.24'  # self.__get_server_host()
-        self.port = 12345  # self.__get_port()
+        self.server_host = tj.get_ip_address()#'192.168.225.56'#self.__get_server_host()
+        self.port = 12345#self.__get_port()
         pass
         self.buffer = 1300
 
@@ -177,19 +185,23 @@ class Sender:
         return int(percent)
 
     @staticmethod
-    def show_progress(percent, time_elapsed=0.0, got_data=0):
+    def show_progress(percent, time_elapsed=0, got_data=0):
         '''Display progress of percentage out of 50'''
+        global last_speed
 
         if percent != 100:
             try:
-                speed = got_data // time_elapsed
-                speed = tj.convert_bytes(speed) + r'/s'
+                speed = got_data // time_elapsed  # Gets the speed in the "Fancy" format
+                speed = tj.convert_bytes(speed) + r'/s'  # Adds /s to speed
+                last_speed=speed
             except:
-                speed = 'N/A'
-            print('  --  %-50s %s | Speed: %s' % ('#' * (percent // 2), f'{percent}%', speed), end='\r')
+                speed = last_speed
+            text=' '*((percent+1)//2)
+            colored=c(text, text_color='WHITE', background_color='WHITE')
+            print('      %-64s %s | Speed: %s' % (colored, f'{percent}%', speed), end='\r')
         else:
-            print('%s' % ' ' * 85, end='\r')
-
+            pass
+            print('%s' % ' ' * 95, end='\r')
         return percent
 
     @staticmethod
@@ -231,7 +243,6 @@ class Sender:
             return b
 
     def send_file(self, filename, size):
-        print(' -- HERE --')
 
         size_remaining = size
         done = 0
@@ -268,9 +279,10 @@ class Sender:
         for i, file in enumerate(self.files_to_send):
             size = os.path.getsize(file)
             size_fancy = tj.convert_bytes(size)
+            tt=time.time()
             print(f'\n Transferring file {i + 1}/{n} \n\t{file} - ({size_fancy})...')
-
             self.send_file(file, size)
+            print(f'\tTime Taken to receive: {tj.convert_time(round(time.time()-tt,1))}')
 
     def close(self):
         self.socket.close()

@@ -8,26 +8,40 @@ from socket import *
 
 import tj
 
+__version__='1.0'
+
 dirname = os.path.dirname(sys.argv[0])
 if dirname != '': os.chdir(dirname)
 
 DIRECTORY = 'Received'
 os.makedirs(DIRECTORY, exist_ok=True)
 
+c = tj.color_text  # Making c as tj.color_text
+last_speed='0 MB/s'
+
+clear = "cls"
+if 'win32' not in sys.platform.lower():
+    clear = 'clear'
+    clr='OLIVE'
+    is_bold=True
+else:
+    clr='BLACK'
+    is_bold=False
 
 def help_receiving():
-    clear = "cls"
-    if 'win32' not in sys.platform.lower(): clear = 'clear'
+    
 
     help_string = f'''
-
-    * RECEIVER *
-
+        {c("                  ", background_color='WHITE')}
+        {c("   * RECEIVER *   ", text_color=clr, background_color='WHITE', bold=True)}
+        {c("                  ", background_color='WHITE')}
  -- HELP FOR RECEIVER --
 
 This option will receive files from the sender.
 
  Please make sure that -
+ {c(f"""
+
  * Files will be received over LAN, so no internet will be used.
  * You and the Sender are connect to the same network, either 
     to the same Wifi or using Ethernet.
@@ -35,7 +49,7 @@ This option will receive files from the sender.
     by yourself.
  * All files received will be saved in the Received folder which have
     been created in the same director as this program.
-    (here - {dirname})
+    (here - {dirname})""", text_color='YELLOW', bold=True)}
 
  It is very easy and straight forward to receive files, Just 3 steps:
      %s'''
@@ -45,7 +59,7 @@ This option will receive files from the sender.
     Port number. Tell both these things to the Sender, who will 
     enter both of these in his computer.
 
-     Enter to go to next step...'''
+    Enter to go to next step...'''
 
     msg2 = f'''
     (2/3) - When the Sender has been connected, files will start 
@@ -66,10 +80,11 @@ This option will receive files from the sender.
         os.system(clear)
 
 
+
 class Receiver:
     def __init__(self):
         self.host = self.__get_host()  # To get the ip address of the Receiver (server)
-        self.port = 12345  # self.__get_port()  # To get a random port number
+        self.port = 12345#self.__get_port()  # To get a random port number
         self.buffer = 1300  # Buffer is set to 1300 to save file from corruption
 
         self.socket = socket(AF_INET, SOCK_STREAM)  # Made TCP socket
@@ -79,7 +94,7 @@ class Receiver:
         print('\n Receiver is READY TO RECEIVE FILES')
         print('     Waiting for the Sender to join...')
         self.partner, self.partner_addr = self.socket.accept()  # Waiting for client to accept
-        print(f'{gethostbyaddr(self.partner_addr[0])[0]} ({self.partner_addr[0]}) is now connected')
+        print(f'''{gethostbyaddr(self.partner_addr[0])[0]} ({self.partner_addr[0]}) is now connected''')
         self.partner.settimeout(0.05)
 
     @staticmethod
@@ -87,14 +102,14 @@ class Receiver:
         '''Function to get the IP address of the Receiver'''
         host = gethostname()
         ip = gethostbyname(host)
-        print('The IP Address of Receiver is: %s' % ip)
+        print('The IP Address of Receiver is: %s' % c(ip, text_color=clr, background_color='WHITE', bold=is_bold))
         return ip
 
     @staticmethod
     def __get_port():
         '''Gives a random number for port'''
         port = randint(4000, 25000)
-        print('The port number of Receiver is: %s' % port)
+        print('\nThe port number of Receiver is: %s' % c(str(port), text_color=clr, background_color='WHITE', bold=is_bold))
         return port
 
     @staticmethod
@@ -106,16 +121,21 @@ class Receiver:
     @staticmethod
     def show_progress(percent, time_elapsed=0, got_data=0):
         '''Display progress of percentage out of 50'''
+        global last_speed
 
         if percent != 100:
             try:
                 speed = got_data // time_elapsed  # Gets the speed in the "Fancy" format
                 speed = tj.convert_bytes(speed) + r'/s'  # Adds /s to speed
+                last_speed=speed
             except:
-                speed = 'N/A'
-            print('  --  %-50s %s | Speed: %s' % ('#' * (percent // 2), f'{percent}%', speed), end='\r')
+                speed = last_speed
+            text=' '*((percent+1)//2)
+            colored=c(text, text_color='WHITE', background_color='WHITE')
+            print('      %-64s %s | Speed: %s' % (colored, f'{percent}%', speed), end='\r')
         else:
-            print('%s' % ' ' * 85, end='\r')
+            pass
+            print('%s' % ' ' * 95, end='\r')
         return percent
 
     @staticmethod
@@ -222,7 +242,9 @@ class Receiver:
             size = D[file]
             size_fancy = tj.convert_bytes(size)
             print(f'\n Receiving file {i + 1}/{n}\n\t{file} - ({size_fancy})')
+            tt=time.time()
             result = self.get_file(file, size)
+            print(f'\tTime Taken to receive: {tj.convert_time(round(time.time()-tt,1))}')
 
             if not result:
                 failed += [[file, size_fancy]]
