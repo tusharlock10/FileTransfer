@@ -18,7 +18,7 @@ os.makedirs(DIRECTORY, exist_ok=True)
 class Receiver:
     def __init__(self):
         self.host = self.__get_host()  # To get the ip address of the Receiver (server)
-        self.port = self.__get_port()  # To get a random port number
+        self.port = 12345  # self.__get_port()  # To get a random port number
         self.buffer = 1300  # Buffer is set to 1300 to save file from corruption
 
         self.socket = socket(AF_INET, SOCK_STREAM)  # Made TCP socket
@@ -82,11 +82,9 @@ class Receiver:
         return D_new
 
     def get_files_metadata(self):
-        '''Gets the metadata of the file from the Sender'''
         data_compressed = b''
         self.partner.settimeout(None)
         run = True
-        # The metadata is sent in parts, we need to collect it and then join
         while run:
             try:
                 i = self.partner.recv(self.buffer)
@@ -96,8 +94,16 @@ class Receiver:
             if i == b'': run = False
             data_compressed += i
 
-        data = zlib.decompress(data_compressed).decode()  # Decompressing the data
-        D = json.loads(data)  # Loading the metadata Dictionary using JSON
+        try:
+            data = zlib.decompress(data_compressed).decode()
+            print('Metadata is intact')
+            error = b'CONFIRMED'
+        except:
+            print('Metadata is corrupt')
+            error = b'CORRUPT'
+            data = '{}'
+        self.partner.send(error)
+        D = json.loads(data)
 
         D_new = self.convert_D(D)
         return D_new
@@ -172,3 +178,9 @@ class Receiver:
 
     def close(self):
         self.partner.close()
+
+
+R = Receiver()
+D = R.get_files_metadata()
+R.get_files(D)
+R.close()
