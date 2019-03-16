@@ -178,9 +178,3 @@ class Receiver:
 
     def close(self):
         self.partner.close()
-
-
-R = Receiver()
-D = R.get_files_metadata()
-R.get_files(D)
-R.close()

@@ -40,6 +40,7 @@ while 1:
     choice = input(msg).upper()
 
     if choice == '1':
+        print('\n * SENDING FILES *\n')
         import sender
 
         S = sender.Sender()
@@ -49,14 +50,15 @@ while 1:
         S.close()
         break
     elif choice == '2':
+        print('\n * RECEIVING FILES *\n')
         import receiver
 
         R = receiver.Receiver()
         D = R.get_files_metadata()
         R.get_files(D)
         R.close()
-
         break
+
     elif choice in ['3', 'Q', 'QUIT', 'E']:
         print()
         bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE', background_color='WHITE')

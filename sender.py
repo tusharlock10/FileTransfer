@@ -224,10 +224,3 @@ class Sender:
 
     def close(self):
         self.socket.close()
-
-
-S = Sender()
-D = S.get_files_to_send()
-S.send_files_metadata(D)
-S.send_files()
-S.close()
