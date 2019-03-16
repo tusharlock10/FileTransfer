@@ -1,7 +1,9 @@
 import json
 import os
 import sys
-import zlib, time
+import time
+import zlib
+from random import randint
 from socket import *
 
 import tj
@@ -18,7 +20,7 @@ os.makedirs(DIRECTORY, exist_ok=True)
 class Receiver:
     def __init__(self):
         self.host = self.__get_host()
-        self.port = 12345  # Port number
+        self.port = self.__get_port()
         self.buffer = 1400
 
         self.socket = socket(AF_INET, SOCK_STREAM)
@@ -27,7 +29,7 @@ class Receiver:
 
         self.partner, self.partner_addr = self.socket.accept()
         print(f'{gethostbyaddr(self.partner_addr[0])[0]} ({self.partner_addr[0]}) is now connected')
-        #self.partner.setblocking(False)
+        # self.partner.setblocking(False)
         self.partner.settimeout(0.05)
 
     @staticmethod
@@ -38,26 +40,31 @@ class Receiver:
         return ip
 
     @staticmethod
+    def __get_port():
+        port = randint(4000, 25000)
+        print('The port number of Receiver is: %s' % port)
+        return port
+
+    @staticmethod
     def convert_to_percent(num, total):
-        percent=num*100/total
+        percent = num * 100 / total
         return int(percent)
 
     @staticmethod
     def show_progress(percent, time_elapsed=0, got_data=0):
         '''Display progress of percentage out of 50'''
 
-        if percent!=100:
+        if percent != 100:
             try:
-                speed=got_data//time_elapsed
-                speed=tj.convert_bytes(speed)+r'/s'
+                speed = got_data // time_elapsed
+                speed = tj.convert_bytes(speed) + r'/s'
             except:
-                speed='N/A'
-            print('  --  %-50s %s | Speed: %s' % ('#'*(percent//2), f'{percent}%', speed), end='\r')
+                speed = 'N/A'
+            print('  --  %-50s %s | Speed: %s' % ('#' * (percent // 2), f'{percent}%', speed), end='\r')
         else:
-            print('%s' % ' '*85, end='\r')
+            print('%s' % ' ' * 85, end='\r')
 
         return percent
-
 
     @staticmethod
     def convert_D(D):
@@ -71,7 +78,6 @@ class Receiver:
             temp = {filename: value}
             D_new.update(temp)
         return D_new
-
 
     def get_files_metadata(self):
         data_compressed = b''
@@ -119,28 +125,26 @@ class Receiver:
         f = open(filename, 'wb')
 
         done = 0
-        done_percent=None
-        t=time.time()
-        got_data=0
+        done_percent = None
+        t = time.time()
+        got_data = 0
 
         while size_remaining:
             var_buffer = self.get_buffer(size_remaining)
             data = self.partner.recv(var_buffer)
 
-            l=len(data)
+            l = len(data)
             done += l
             got_data += l
-            percent=self.convert_to_percent(done, size)
+            percent = self.convert_to_percent(done, size)
 
             if percent != done_percent:
-                time_elapsed = time.time()-t
+                time_elapsed = time.time() - t
                 self.show_progress(percent, time_elapsed, got_data)
 
                 done_percent = percent
-                got_data=0
-                t=time.time()
-
-
+                got_data = 0
+                t = time.time()
 
             f.write(data)
             f.flush()
@@ -158,7 +162,7 @@ class Receiver:
         n = len(D)
         self.partner.settimeout(None)
         for i, file in enumerate(list(D.keys())):
-            
+
             size = D[file]
             size_fancy = tj.convert_bytes(size)
             print(f'\n Receiving file {i + 1}/{n}\n\t{file} - ({size_fancy})')
@@ -172,7 +176,8 @@ class Receiver:
     def close(self):
         self.partner.close()
 
-t=time.time()
+
+t = time.time()
 R = Receiver()
 D = R.get_files_metadata()
 R.get_files(D)

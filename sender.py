@@ -1,7 +1,8 @@
 import json
 import os
 import sys
-import zlib, time
+import time
+import zlib
 from socket import *
 
 import tj
@@ -17,15 +18,62 @@ os.makedirs(DIRECTORY, exist_ok=True)
 
 class Sender:
     def __init__(self):
-        self.server_host = gethostbyname(gethostname())  # '192.168.225.56'  # IP of this server
-        # self.server_host = '192.168.225.24'
-        self.port = 12345  # Port number
+        self.server_host = '192.168.225.24'  # self.__get_server_host()
+        self.port = self.__get_port()
+        pass
         self.buffer = 1400
 
         self.socket = socket(AF_INET, SOCK_STREAM)
         self.socket.connect((self.server_host, self.port))
         self.files_to_send = None
         print(f'Connected to {gethostbyaddr(self.server_host)[0]} ({self.server_host})')
+
+    @staticmethod
+    def __validate_ip(ip):
+        L = ip.split('.')
+        if len(L) != 4:
+            msg = 'IP address should contain exactly 4 dots (.): '
+            return False, msg
+
+        for i in L:
+            msg = ''
+            if not i.isdigit():
+                msg = 'Enter only digits in IP address: '
+                return False, msg
+
+            if not 0 <= int(i) <= 225:
+                msg = 'IP address numbers should be between 0 and 225'
+                return False, msg
+        return True, msg
+
+    @staticmethod
+    def __validate_port(port):
+        try:
+            port = int(port)
+        except:
+            msg = 'Port number should only contain digits, enter again: '
+            return False, msg
+
+        if not 4000 <= port <= 25000:
+            msg = 'INVALID port number, enter again: '
+            return False, msg
+        return True, ''
+
+    def __get_server_host(self):
+        msg = 'Enter the IP address of the Receiver: '
+        while True:
+            ip = input(msg)
+            check, msg = self.__validate_ip(ip)
+            if check:
+                return ip
+
+    def __get_port(self):
+        msg = 'Enter the port number of the Receiver: '
+        while True:
+            port = input(msg)
+            check, msg = self.__validate_port(port)
+            if check:
+                return int(port)
 
     def get_files_to_send(self):
         L_send = os.listdir(DIRECTORY)
@@ -58,25 +106,25 @@ class Sender:
         self.files_to_send = L
 
         return D
-    
+
     @staticmethod
     def convert_to_percent(num, total):
-        percent=num*100/total
+        percent = num * 100 / total
         return int(percent)
 
     @staticmethod
     def show_progress(percent, time_elapsed=0, got_data=0):
         '''Display progress of percentage out of 50'''
 
-        if percent!=100:
+        if percent != 100:
             try:
-                speed=got_data//time_elapsed
-                speed=tj.convert_bytes(speed)+r'/s'
+                speed = got_data // time_elapsed
+                speed = tj.convert_bytes(speed) + r'/s'
             except:
-                speed='N/A'
-            print('  --  %-50s %s | Speed: %s' % ('#'*(percent//2), f'{percent}%', speed), end='\r')
+                speed = 'N/A'
+            print('  --  %-50s %s | Speed: %s' % ('#' * (percent // 2), f'{percent}%', speed), end='\r')
         else:
-            print('%s' % ' '*85, end='\r')
+            print('%s' % ' ' * 85, end='\r')
 
         return percent
 
@@ -103,12 +151,8 @@ class Sender:
 
         confirm = self.socket.recv(self.buffer)  # To confirm that metadata is received
         if confirm == b'CONFIRMED':
-            print('Receiver got the metadata correctly...\n')
             return True
         else:
-            print('''Receiver says that the metadata received is incorrect,
-    so apparently, the Receiver doesn't know what files I am sending to him,
-    this might lead to some corrupt data...\n''')
             return False
 
     def get_buffer(self, size_remaining):
@@ -121,44 +165,30 @@ class Sender:
     def send_file(self, filename, size):
 
         size_remaining = size
-        done=0
+        done = 0
         f = open(filename, 'rb')
 
-        t=time.time()
-        got_data=0
-        done_percent=0
+        t = time.time()
+        got_data = 0
+        done_percent = 0
 
         while size_remaining:
-            #time.sleep(0.005)
             var_buffer = self.get_buffer(size_remaining)
             data = f.read(var_buffer)
-            #print(f'NEED TO SEND: {var_buffer} , SENT: {len(data)}')
             self.socket.send(data)
 
-            l=len(data)
-            done+=l
-            got_data+=l
-            percent=self.convert_to_percent(done, size)
+            l = len(data)
+            done += l
+            got_data += l
+            percent = self.convert_to_percent(done, size)
 
             if percent != done_percent:
-                time_elapsed = time.time()-t
+                time_elapsed = time.time() - t
                 self.show_progress(percent, time_elapsed, got_data)
 
                 done_percent = percent
-                got_data=0
-                t=time.time()
-
-            '''received = self.socket.recv(4)
-
-            while received == b'CORR':
-                # This means Receiver got a corrupt package
-                # Now I have to send this package again
-                print(f' At {done}/{size}, Receiver got corrupt package, sending again...')
-                self.socket.send(data)
-                # Package is send again
-                received = self.socket.recv(4)
-                # Lets see if the receiver got this package correctly'''
-
+                got_data = 0
+                t = time.time()
             size_remaining -= var_buffer
 
         f.close()
@@ -166,15 +196,24 @@ class Sender:
 
     def send_files(self):
         n = len(self.files_to_send)
+        failed = []
         for i, file in enumerate(self.files_to_send):
             size = os.path.getsize(file)
             size_fancy = tj.convert_bytes(size)
-            print(f'\n Transferring file {i + 1}/{n} \n\t{file} - ({size})...')
+            print(f'\n Transferring file {i + 1}/{n} \n\t{file} - ({size_fancy})...')
             result = self.send_file(file, size)
             if result:
                 print(' File transferred successfully!')
             else:
                 print(' --- FILE TRANSFER FAILED ---')
+                failed += [file]
+
+        if failed:
+            print('\n THESE FILES FAILED TO TRANSFER -')
+            for file in failed:
+                print(' ', file)
+        else:
+            print(' ALL FILES TRANSFERRED SUCCESSFULLY')
 
             # time.sleep(0.03)
 
