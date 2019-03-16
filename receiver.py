@@ -15,6 +15,57 @@ DIRECTORY = 'Received'
 os.makedirs(DIRECTORY, exist_ok=True)
 
 
+def help_receiving():
+    clear = "cls"
+    if 'win32' not in sys.platform.lower(): clear = 'clear'
+
+    help_string = f'''
+
+    * RECEIVER *
+
+ -- HELP FOR RECEIVER --
+
+This option will receive files from the sender.
+
+ Please make sure that -
+ * Files will be received over LAN, so no internet will be used.
+ * You and the Sender are connect to the same network, either 
+    to the same Wifi or using Ethernet.
+ * You have to tell your IP address and Port number to the Sender,
+    by yourself.
+ * All files received will be saved in the Received folder which have
+    been created in the same director as this program.
+    (here - {dirname})
+
+ It is very easy and straight forward to receive files, Just 3 steps:
+     %s'''
+
+    msg1 = '''
+    (1/3) - The program will show you your IP address and the 
+    Port number. Tell both these things to the Sender, who will 
+    enter both of these in his computer.
+
+     Enter to go to next step...'''
+
+    msg2 = f'''
+    (2/3) - When the Sender has been connected, files will start 
+    Receiving automatically, without any interference from you.
+    They will be saved in the Received folder as stated above.
+
+    Enter to go to the next step...'''
+
+    msg3 = '''
+    (3/3) - Thats it, all files/folders will be received and saved.
+
+    Enter to start Receiving the files...'''
+
+    L = [msg1, msg2, msg3]
+    for msg in L:
+        os.system(clear)
+        input(help_string % msg)
+        os.system(clear)
+
+
 class Receiver:
     def __init__(self):
         self.host = self.__get_host()  # To get the ip address of the Receiver (server)
@@ -25,6 +76,8 @@ class Receiver:
         self.socket.bind((self.host, self.port))  # Binded the socket
         self.socket.listen(1)  # Only 1 user will connect
 
+        print('\n Receiver is READY TO RECEIVE FILES')
+        print('     Waiting for the Sender to join...')
         self.partner, self.partner_addr = self.socket.accept()  # Waiting for client to accept
         print(f'{gethostbyaddr(self.partner_addr[0])[0]} ({self.partner_addr[0]}) is now connected')
         self.partner.settimeout(0.05)
@@ -155,7 +208,6 @@ class Receiver:
 
         f.close()
         self.show_progress(100)
-        print('I got', done, 'bytes')
         if done == size:
             return True
         else:
@@ -164,6 +216,7 @@ class Receiver:
     def get_files(self, D):
         n = len(D)
         self.partner.settimeout(None)
+        failed = []
         for i, file in enumerate(list(D.keys())):
 
             size = D[file]
@@ -171,10 +224,13 @@ class Receiver:
             print(f'\n Receiving file {i + 1}/{n}\n\t{file} - ({size_fancy})')
             result = self.get_file(file, size)
 
-            if result:
-                print(' Received file successfully')
-            else:
-                print(' --- FILE RECEIVED IS CORRUPT ---')
+            if not result:
+                failed += [[file, size_fancy]]
+
+        if failed:
+            print('\n THERE WAS SOME ERROR IN RECEIVING THESE FILES - ')
+            for i in failed:
+                print(f' {i[0]} , Size: {i[1]}')
 
     def close(self):
         self.partner.close()

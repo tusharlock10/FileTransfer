@@ -8,12 +8,70 @@ from socket import *
 import tj
 
 try:
-    os.chdir(os.path.dirname(sys.argv[0]))
+    dirname = os.path.dirname(sys.argv[0])
+    os.chdir(dirname)
 except:
     pass
 
 DIRECTORY = 'Send'
 os.makedirs(DIRECTORY, exist_ok=True)
+
+
+def help_sending():
+    clear = "cls"
+    if 'win32' not in sys.platform.lower(): clear = 'clear'
+
+    help_string = '''
+    
+    * SENDER *
+    
+ -- HELP FOR SENDER --
+    
+This option will send files to the receiver.
+
+ Please make sure that -
+ * First the receiver is read to receive files.
+ * Files will be send over LAN, so no internet will be used.
+ * You and the Receiver are connect to the same network, either 
+    to the same Wifi or using Ethernet.
+ 
+ It is very easy and straight forward to send files, Just 3 steps:
+     %s'''
+
+    msg1 = '''
+    (1/3) - You will be asked to enter the IP address and Port number
+     of the receiver. Enter them carefully. Both, the IP and port no.
+     will be shown on the Receiver's computer, enter it by seeing from 
+     there!
+     
+     Enter to go to next step...'''
+
+    msg2 = f'''
+    (2/3) - You will now have to select which files to send. Its pretty
+    easy, just copy paste the files/folder which you want to send, in the 
+    Send folder which have been created just now in the same directory as
+    this program (here - {dirname}).
+                     ALTERNATEVLY\
+    If the file/folder you want to send is very large, then instead of \
+    copy pasting it, type its path when asked.\
+
+    * Also, when the files have been send, please delete the Send\
+    folder. Otherwise when you will use this program for the next time, \
+    these files will also be send.\
+
+    Enter to go to the next step...'''
+
+    msg3 = '''
+    (3/3) - Thats it, just after you have selected the files you want to send,
+    hit send and those files will be send to the Receiver!
+    
+    Enter to start Sending the files...'''
+
+    L = [msg1, msg2, msg3]
+    for msg in L:
+        os.system(clear)
+        input(help_string % msg)
+        os.system(clear)
 
 
 class Sender:
@@ -113,7 +171,7 @@ class Sender:
         return int(percent)
 
     @staticmethod
-    def show_progress(percent, time_elapsed=0, got_data=0):
+    def show_progress(percent, time_elapsed=0.0, got_data=0):
         '''Display progress of percentage out of 50'''
 
         if percent != 100:
@@ -201,26 +259,12 @@ class Sender:
 
     def send_files(self):
         n = len(self.files_to_send)
-        failed = []
         for i, file in enumerate(self.files_to_send):
             size = os.path.getsize(file)
             size_fancy = tj.convert_bytes(size)
             print(f'\n Transferring file {i + 1}/{n} \n\t{file} - ({size_fancy})...')
-            result = self.send_file(file, size)
-            if result:
-                print(' File transferred successfully!')
-            else:
-                print(' --- FILE TRANSFER FAILED ---')
-                failed += [file]
 
-        if failed:
-            print('\n THESE FILES FAILED TO TRANSFER -')
-            for file in failed:
-                print(' ', file)
-        else:
-            print(' ALL FILES TRANSFERRED SUCCESSFULLY')
-
-            # time.sleep(0.03)
+            self.send_file(file, size)
 
     def close(self):
         self.socket.close()

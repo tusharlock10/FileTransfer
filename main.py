@@ -28,8 +28,10 @@ main_menu = '''
 
  * MAIN MENU *
 
- 1) SEND FILES
- 2) RECEIVE FILES
+ 1) SEND FILES 
+        * Type 1h instead of 1, for help regarding sending files.
+ 2) RECEIVE FILES 
+        * Type 2h instead of 2, for help regarding receiving files.
  3) QUIT
 ''' % logo
 
@@ -39,9 +41,12 @@ while 1:
     print(main_menu)
     choice = input(msg).upper()
 
-    if choice == '1':
+    if choice.upper() in ['1', '1H', '1HELP', '1 H', '1 HELP']:
         print('\n * SENDING FILES *\n')
         import sender
+
+        if choice != '1':
+            sender.help_sending()
 
         S = sender.Sender()
         D = S.get_files_to_send()
@@ -49,9 +54,13 @@ while 1:
         S.send_files()
         S.close()
         break
-    elif choice == '2':
+
+    elif choice.upper() in ['2', '2H', '2HELP', '2 H', '2 HELP']:
         print('\n * RECEIVING FILES *\n')
         import receiver
+
+        if choice != '2':
+            receiver.help_receiving()
 
         R = receiver.Receiver()
         D = R.get_files_metadata()
