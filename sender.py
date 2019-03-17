@@ -92,8 +92,8 @@ This option will send files to the receiver.
 
 class Sender:
     def __init__(self):
-        self.server_host = tj.get_ip_address()  # '192.168.225.56'#self.__get_server_host()
-        self.port = 12345  # self.__get_port()
+        self.server_host = self.__get_server_host()
+        self.port = self.__get_port()
         pass
         self.buffer = 1300
         self.make_connection()
@@ -250,7 +250,7 @@ seconds, the Receiver is yet not ready
                         t = time.time()
                         # print('\x1b[1A\x1b[1A', end='\r')
                 if to_printed:
-                    print('\n WAITING FOR RECEIVER TO START...')
+                    print('\n WAITING FOR RECEIVER TO START...\n\n')
                     to_printed = False
 
     def send_files_metadata(self, D):

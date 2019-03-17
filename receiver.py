@@ -82,7 +82,7 @@ This option will receive files from the sender.
 class Receiver:
     def __init__(self):
         self.host = self.__get_host()  # To get the ip address of the Receiver (server)
-        self.port = 12345  # self.__get_port()  # To get a random port number
+        self.port = self.__get_port()  # To get a random port number
         self.buffer = 1300  # Buffer is set to 1300 to save file from corruption
 
         print('\n Receiver is READY TO RECEIVE FILES\n')
