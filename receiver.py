@@ -8,7 +8,7 @@ from socket import *
 
 import tj
 
-__version__='1.0'
+__version__ = '1.0'
 
 dirname = os.path.dirname(sys.argv[0])
 if dirname != '': os.chdir(dirname)
@@ -17,20 +17,19 @@ DIRECTORY = 'Received'
 os.makedirs(DIRECTORY, exist_ok=True)
 
 c = tj.color_text  # Making c as tj.color_text
-last_speed='0 MB/s'
+last_speed = '0 MB/s'
 
 clear = "cls"
 if 'win32' not in sys.platform.lower():
     clear = 'clear'
-    clr='OLIVE'
-    is_bold=True
+    clr = 'OLIVE'
+    is_bold = True
 else:
-    clr='BLACK'
-    is_bold=False
+    clr = 'BLACK'
+    is_bold = False
+
 
 def help_receiving():
-    
-
     help_string = f'''
         {c("                  ", background_color='WHITE')}
         {c("   * RECEIVER *   ", text_color=clr, background_color='WHITE', bold=True)}
@@ -80,20 +79,15 @@ This option will receive files from the sender.
         os.system(clear)
 
 
-
 class Receiver:
     def __init__(self):
         self.host = self.__get_host()  # To get the ip address of the Receiver (server)
-        self.port = 12345#self.__get_port()  # To get a random port number
+        self.port = 12345  # self.__get_port()  # To get a random port number
         self.buffer = 1300  # Buffer is set to 1300 to save file from corruption
 
-        self.socket = socket(AF_INET, SOCK_STREAM)  # Made TCP socket
-        self.socket.bind((self.host, self.port))  # Binded the socket
-        self.socket.listen(1)  # Only 1 user will connect
-
-        print('\n Receiver is READY TO RECEIVE FILES')
-        print('     Waiting for the Sender to join...')
-        self.partner, self.partner_addr = self.socket.accept()  # Waiting for client to accept
+        print('\n Receiver is READY TO RECEIVE FILES\n')
+        self.partner, self.partner_addr = None, None
+        self.make_connection()  # Waiting for client to accept
         print(f'''{gethostbyaddr(self.partner_addr[0])[0]} ({self.partner_addr[0]}) is now connected''')
         self.partner.settimeout(0.05)
 
@@ -109,7 +103,8 @@ class Receiver:
     def __get_port():
         '''Gives a random number for port'''
         port = randint(4000, 25000)
-        print('\nThe port number of Receiver is: %s' % c(str(port), text_color=clr, background_color='WHITE', bold=is_bold))
+        print('\nThe port number of Receiver is: %s' % c(str(port), text_color=clr, background_color='WHITE',
+                                                         bold=is_bold))
         return port
 
     @staticmethod
@@ -127,11 +122,11 @@ class Receiver:
             try:
                 speed = got_data // time_elapsed  # Gets the speed in the "Fancy" format
                 speed = tj.convert_bytes(speed) + r'/s'  # Adds /s to speed
-                last_speed=speed
+                last_speed = speed
             except:
                 speed = last_speed
-            text=' '*((percent+1)//2)
-            colored=c(text, text_color='WHITE', background_color='WHITE')
+            text = ' ' * ((percent + 1) // 2)
+            colored = c(text, text_color='WHITE', background_color='WHITE')
             print('      %-64s %s | Speed: %s' % (colored, f'{percent}%', speed), end='\r')
         else:
             pass
@@ -153,6 +148,45 @@ class Receiver:
             temp = {filename: value}
             D_new.update(temp)
         return D_new
+
+    def make_connection(self):
+        to_printed = True
+        t = time.time()
+        start_time = t
+        dur = 0
+
+        while True:
+            try:
+                self.socket = socket(AF_INET, SOCK_STREAM)  # Made TCP socket
+                self.socket.bind((self.host, self.port))  # Binded the socket
+                self.socket.listen(1)  # Only 1 user will connect
+                self.socket.settimeout(0.1)
+                self.partner, self.partner_addr = self.socket.accept()
+                break
+            except:
+                self.socket.close()
+                time.sleep(0.1)
+                if time.time() - t > 10:
+                    dur += 10
+                    if not to_printed:
+                        print(f'\x1b[1A\x1b[1A\x1b[1A')
+
+                    q = input(
+                        f''' Its been {tj.convert_time(time.time() - start_time, 1)} \
+seconds, the Sender is yet not connected
+          Do you want to quit or not? (y/n): ''').upper()
+                    if q in ['Y', 'YES', 'YEAH', 'HELL YEAH', 'OH YEAH', 'WHY NOT']:
+                        bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE',
+                                            background_color='WHITE')
+                        print(bye)
+                        input('Enter to quit...')
+                        sys.exit()
+                    else:
+                        t = time.time()
+                        # print('\x1b[1A\x1b[1A', end='\r')
+                if to_printed:
+                    print('\n WAITING FOR SENDER TO JOIN...')
+                    to_printed = False
 
     def get_files_metadata(self):
         data_compressed = b''
@@ -242,9 +276,9 @@ class Receiver:
             size = D[file]
             size_fancy = tj.convert_bytes(size)
             print(f'\n Receiving file {i + 1}/{n}\n\t{file} - ({size_fancy})')
-            tt=time.time()
+            tt = time.time()
             result = self.get_file(file, size)
-            print(f'\tTime Taken to receive: {tj.convert_time(round(time.time()-tt,1))}')
+            print(f'\tTime Taken to receive: {tj.convert_time(round(time.time() - tt, 1))}')
 
             if not result:
                 failed += [[file, size_fancy]]

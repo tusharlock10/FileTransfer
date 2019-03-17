@@ -7,7 +7,7 @@ from socket import *
 
 import tj
 
-__version__='1.0'
+__version__ = '1.0'
 
 try:
     dirname = os.path.dirname(sys.argv[0])
@@ -19,16 +19,16 @@ DIRECTORY = 'Send'
 os.makedirs(DIRECTORY, exist_ok=True)
 
 c = tj.color_text  # Making c as tj.color_text
-last_speed='0 MB/s'
+last_speed = '0 MB/s'
 
 
 def help_sending():
     clear = "cls"
     if 'win32' not in sys.platform.lower():
         clear = 'clear'
-        clr='OLIVE'
+        clr = 'OLIVE'
     else:
-        clr='BLACK'
+        clr = 'BLACK'
 
     help_string = f'''
         {c("                  ", background_color='WHITE')}
@@ -40,6 +40,8 @@ This option will send files to the receiver.
 
  Please make sure that -
 {c("""
+ * CONNECT, is a cross-platform program, which means you can transfer
+    files from a Windows OS to macOS or a Linux distro or vice-versa.
  * First the receiver is read to receive files.
  * Files will be send over LAN, so no internet will be used.
  * You and the Receiver are connect to the same network, either 
@@ -60,7 +62,7 @@ This option will send files to the receiver.
     (2/3) - You will now have to select which files to send. Its pretty
     easy, just copy paste the files/folder which you want to send, in the 
     Send folder which have been created just now in the same directory as
-    this program (here - {c(dirname, text_color='PURPLE',bold=True)}). 
+    this program (here - {c(dirname, text_color='PURPLE', bold=True)}). 
     Copy paste your files/folder in this folder, before starting the program! 
     Although you can copy paste now, but not after this help ends!!
                      {c("ALTERNATEVLY", text_color="GREEN", bold=True)}
@@ -90,13 +92,12 @@ This option will send files to the receiver.
 
 class Sender:
     def __init__(self):
-        self.server_host = tj.get_ip_address()#'192.168.225.56'#self.__get_server_host()
-        self.port = 12345#self.__get_port()
+        self.server_host = tj.get_ip_address()  # '192.168.225.56'#self.__get_server_host()
+        self.port = 12345  # self.__get_port()
         pass
         self.buffer = 1300
+        self.make_connection()
 
-        self.socket = socket(AF_INET, SOCK_STREAM)
-        self.socket.connect((self.server_host, self.port))
         self.files_to_send = None
         print(f'Connected to {gethostbyaddr(self.server_host)[0]} ({self.server_host})')
 
@@ -193,11 +194,11 @@ class Sender:
             try:
                 speed = got_data // time_elapsed  # Gets the speed in the "Fancy" format
                 speed = tj.convert_bytes(speed) + r'/s'  # Adds /s to speed
-                last_speed=speed
+                last_speed = speed
             except:
                 speed = last_speed
-            text=' '*((percent+1)//2)
-            colored=c(text, text_color='WHITE', background_color='WHITE')
+            text = ' ' * ((percent + 1) // 2)
+            colored = c(text, text_color='WHITE', background_color='WHITE')
             print('      %-64s %s | Speed: %s' % (colored, f'{percent}%', speed), end='\r')
         else:
             pass
@@ -215,6 +216,42 @@ class Sender:
             i += buffer
             j += buffer
         return L
+
+    def make_connection(self):
+        to_printed = True
+        t = time.time()
+        start_time = t
+        dur = 0
+
+        while True:
+            try:
+                self.socket = socket(AF_INET, SOCK_STREAM)
+                self.socket.connect((self.server_host, self.port))
+                break
+            except:
+                self.socket.close()
+                time.sleep(0.1)
+                if time.time() - t > 10:
+                    dur += 10
+                    if not to_printed:
+                        print(f'\x1b[1A\x1b[1A\x1b[1A')
+
+                    q = input(
+                        f''' Its been {tj.convert_time(time.time() - start_time, 1)} \
+seconds, the Receiver is yet not ready
+  Do you want to quit or not? (y/n): ''').upper()
+                    if q in ['Y', 'YES', 'YEAH', 'HELL YEAH', 'OH YEAH', 'WHY NOT']:
+                        bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE',
+                                            background_color='WHITE')
+                        print(bye)
+                        input('Enter to quit...')
+                        sys.exit()
+                    else:
+                        t = time.time()
+                        # print('\x1b[1A\x1b[1A', end='\r')
+                if to_printed:
+                    print('\n WAITING FOR RECEIVER TO START...')
+                    to_printed = False
 
     def send_files_metadata(self, D):
 
@@ -279,10 +316,10 @@ class Sender:
         for i, file in enumerate(self.files_to_send):
             size = os.path.getsize(file)
             size_fancy = tj.convert_bytes(size)
-            tt=time.time()
+            tt = time.time()
             print(f'\n Transferring file {i + 1}/{n} \n\t{file} - ({size_fancy})...')
             self.send_file(file, size)
-            print(f'\tTime Taken to receive: {tj.convert_time(round(time.time()-tt,1))}')
+            print(f'\tTime Taken to receive: {tj.convert_time(round(time.time() - tt, 1))}')
 
     def close(self):
         self.socket.close()

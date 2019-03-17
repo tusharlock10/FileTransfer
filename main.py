@@ -5,34 +5,44 @@ import tj
 
 clear = "cls"
 if 'win32' not in sys.platform.lower(): clear = 'clear'
+c = tj.color_text
 
-logo = r'''
-----------------------------------+
-   ___                            |                _     
-  / __|    ___    _ _     _ _      ___     __     | |_   
- | (__    / _ \  | ' \   | ' \    / -_)   / _|    |  _|  
-  \___|   \___/  |_||_|  |_||_|   \___|   \__|_   _\__|  
-_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""| 
-"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-' 
-                                  |
-        -TJ Productions (c) 2019  |
-                                  |
-  -- A FILE SHARING PLATFORM  --  |
-----------------------------------+
+m1 = '     _  _             _  _ ___    '
+m2 = '    /  / \ |\ | |\ | |_ /   |     '
+m3 = '    \_ \_/ | \| | \| |_ \_  |     '
+space = c('                                  ', background_color='WHITE')
+border = c('                                      ', text_color='BLUE', background_color='PURPLE')
+vbar = c('  ', text_color='BLUE', background_color='PURPLE')
 
+logo = f'''
+  {border}
+  {vbar}{space}{vbar}
+  {vbar}{c(m1, text_color='BLACK', background_color='WHITE')}{vbar}
+  {vbar}{c(m2, text_color='BLACK', background_color='WHITE')}{vbar}
+  {vbar}{c(m3, text_color='BLACK', background_color='WHITE')}{vbar}
+  {vbar}{space}{vbar}
+  {vbar}{c('        -TJ Productions (c) 2019  ', text_color='YELLOW',
+           background_color='WHITE', bold=True)}{vbar}
+  {vbar}{space}{vbar}
+  {vbar}{c('  -- A FILE SHARING PLATFORM  --  ', text_color='YELLOW',
+           background_color='WHITE', bold=True)}{vbar}
+  {vbar}{space}{vbar}
+  {border}
 
 '''
 
-main_menu = '''
+main_menu = f'''
 %s
 
  * MAIN MENU *
 
- 1) SEND FILES 
-        * Type 1h instead of 1, for help regarding sending files.
- 2) RECEIVE FILES 
-        * Type 2h instead of 2, for help regarding receiving files.
- 3) QUIT
+ 1) {c('SEND FILES', text_color='GREEN', bold=True)} 
+        {c('* Type 1h instead of 1, for help regarding sending files.',
+           text_color='BLACK', background_color='WHITE', underline=True)}
+ 2) {c('RECEIVE FILES', text_color='GREEN', bold=True)} 
+        {c('* Type 2h instead of 2, for help regarding receiving files.',
+           text_color='BLACK', background_color='WHITE', underline=True)}
+ 3) {c('QUIT', text_color='RED', bold=True)}
 ''' % logo
 
 msg = 'Enter your choice from 1-3: '
