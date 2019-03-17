@@ -22,11 +22,13 @@ last_speed = '0 MB/s'
 clear = "cls"
 if 'win32' not in sys.platform.lower():
     clear = 'clear'
-    clr = 'OLIVE'
-    is_bold = True
-else:
-    clr = 'BLACK'
-    is_bold = False
+
+
+def full_exit():
+    bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE', background_color='WHITE')
+    print(bye)
+    input('Enter to quit...')
+    sys.exit()
 
 
 def help_receiving():
@@ -75,14 +77,17 @@ This option will receive files from the sender.
     L = [msg1, msg2, msg3]
     for msg in L:
         os.system(clear)
-        input(help_string % msg)
+        q = input(help_string % msg).lower()
+        if q in ['q', 'quit', 'e', 'exit']:
+            full_exit()
+
         os.system(clear)
 
 
 class Receiver:
     def __init__(self):
         self.host = self.__get_host()  # To get the ip address of the Receiver (server)
-        self.port = 12345  # self.__get_port()  # To get a random port number
+        self.port = self.__get_port()  # To get a random port number
         self.buffer = 1300  # Buffer is set to 1300 to save file from corruption
 
         print('\n Receiver is READY TO RECEIVE FILES\n')
@@ -96,15 +101,16 @@ class Receiver:
         '''Function to get the IP address of the Receiver'''
         host = gethostname()
         ip = gethostbyname(host)
-        print('The IP Address of Receiver is: %s' % c(ip, text_color=clr, background_color='WHITE', bold=is_bold))
+        print('The IP Address of Receiver is: %s' % c(ip, text_color='BLACK',
+                                                      background_color='WHITE'))
         return ip
 
     @staticmethod
     def __get_port():
         '''Gives a random number for port'''
         port = randint(4000, 25000)
-        print('\nThe port number of Receiver is: %s' % c(str(port), text_color=clr, background_color='WHITE',
-                                                         bold=is_bold))
+        print('\nThe port number of Receiver is: %s' % c(str(port), text_color='BLACK',
+                                                         background_color='WHITE'))
         return port
 
     @staticmethod
@@ -174,13 +180,9 @@ class Receiver:
                     q = input(
                         f''' Its been {tj.convert_time(time.time() - start_time, 1)} \
 seconds, the Sender is yet not connected
-          Do you want to quit or not? (y/n): ''').upper()
+  Do you want to quit or not? (y/n): ''').upper()
                     if q in ['Y', 'YES', 'YEAH', 'HELL YEAH', 'OH YEAH', 'WHY NOT']:
-                        bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE',
-                                            background_color='WHITE')
-                        print(bye)
-                        input('Enter to quit...')
-                        sys.exit()
+                        self.close()
                     else:
                         t = time.time()
                         # print('\x1b[1A\x1b[1A', end='\r')
@@ -289,4 +291,8 @@ seconds, the Sender is yet not connected
                 print(f' {i[0]} , Size: {i[1]}')
 
     def close(self):
-        self.partner.close()
+        try:
+            self.socket.close()
+        except:
+            pass
+        full_exit()

@@ -46,6 +46,8 @@ main_menu = f'''
 ''' % logo
 
 msg = 'Enter your choice from 1-3: '
+import sender, receiver
+
 while 1:
     os.system(clear)
     print(main_menu)
@@ -53,7 +55,6 @@ while 1:
 
     if choice.upper() in ['1', '1H', '1HELP', '1 H', '1 HELP']:
         print('\n * SENDING FILES *\n')
-        import sender
 
         if choice != '1':
             sender.help_sending()
@@ -67,8 +68,6 @@ while 1:
 
     elif choice.upper() in ['2', '2H', '2HELP', '2 H', '2 HELP']:
         print('\n * RECEIVING FILES *\n')
-        import receiver
-
         if choice != '2':
             receiver.help_receiving()
 
@@ -79,10 +78,6 @@ while 1:
         break
 
     elif choice in ['3', 'Q', 'QUIT', 'E']:
-        print()
-        bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE', background_color='WHITE')
-        print(bye)
-        input('Enter to quit...')
-        break
+        sender.full_exit()
     else:
         msg = 'Enter only numbers from 1-3 (or 1h or 2h): '
