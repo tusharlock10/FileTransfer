@@ -22,6 +22,13 @@ c = tj.color_text  # Making c as tj.color_text
 last_speed = '0 MB/s'
 
 
+def full_exit():
+    bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE', background_color='WHITE')
+    print(bye)
+    input('Enter to quit...')
+    sys.exit()
+
+
 def help_sending():
     clear = "cls"
     if 'win32' not in sys.platform.lower():
@@ -85,8 +92,10 @@ This option will send files to the receiver.
     L = [msg1, msg2, msg3]
     for msg in L:
         os.system(clear)
-        choice = input(help_string % msg)
-        if choice.lower() == 'q': sys.exit()
+        q = input(help_string % msg)
+        if q in ['q', 'quit', 'e', 'exit']:
+            full_exit()
+
         os.system(clear)
 
 
@@ -96,10 +105,22 @@ class Sender:
         self.port = self.__get_port()
         pass
         self.buffer = 1300
+        self.socket = None
         self.make_connection()
 
         self.files_to_send = None
-        print(f'Connected to {gethostbyaddr(self.server_host)[0]} ({self.server_host})')
+        try:
+            print(f'Connected to {gethostbyaddr(self.server_host)[0]} ({self.server_host})')
+        except:
+            print(f'''
+    {c("An error occurred because of incorrect IP address, please restart the program.",
+       text_color='RED', background_color='WHITE')}
+        {c("This time, please make sure you enter the correct IP address, or make",
+           text_color='RED', background_color='WHITE')}
+                 {c("sure that the Receiver is ready to Receive files!",
+                    text_color='RED', background_color='WHITE')}\n
+''')
+            self.close()
 
     @staticmethod
     def __validate_ip(ip):
@@ -133,17 +154,21 @@ class Sender:
         return True, ''
 
     def __get_server_host(self):
-        msg = 'Enter the IP address of the Receiver: '
+        msg = 'Enter the IP address of the Receiver (q to quit): '
         while True:
             ip = input(msg)
+            if ip.lower() in ['q', 'e', 'quit', 'exit']:
+                self.close()
             check, msg = self.__validate_ip(ip)
             if check:
                 return ip
 
     def __get_port(self):
-        msg = 'Enter the port number of the Receiver: '
+        msg = 'Enter the port number of the Receiver (q to quit): '
         while True:
             port = input(msg)
+            if port.lower() in ['q', 'e', 'quit', 'exit']:
+                self.close()
             check, msg = self.__validate_port(port)
             if check:
                 return int(port)
@@ -160,7 +185,7 @@ class Sender:
             while True:
                 path = input(msg)
                 if path.lower() in ['e', 'q', 'exit', 'quit']:
-                    break
+                    self.close()
                 if os.path.isdir(path):
                     L = tj.get_files_in_folder(path)
                     dirname = os.path.dirname(path)
@@ -241,11 +266,7 @@ class Sender:
 seconds, the Receiver is yet not ready
   Do you want to quit or not? (y/n): ''').upper()
                     if q in ['Y', 'YES', 'YEAH', 'HELL YEAH', 'OH YEAH', 'WHY NOT']:
-                        bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE',
-                                            background_color='WHITE')
-                        print(bye)
-                        input('Enter to quit...')
-                        sys.exit()
+                        self.close()
                     else:
                         t = time.time()
                         # print('\x1b[1A\x1b[1A', end='\r')
@@ -322,4 +343,11 @@ seconds, the Receiver is yet not ready
             print(f'\tTime Taken to receive: {tj.convert_time(round(time.time() - tt, 1))}')
 
     def close(self):
-        self.socket.close()
+        try:
+            self.socket.close()
+        except:
+            pass
+        bye = tj.color_text('  * GOOD BYE *  ', text_color='PURPLE', background_color='WHITE')
+        print(bye)
+        input('Enter to quit...')
+        sys.exit()
