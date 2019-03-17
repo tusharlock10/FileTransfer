@@ -252,7 +252,10 @@ seconds, the Sender is yet not connected
 
             if percent != done_percent:
                 time_elapsed = time.time() - t
-                self.show_progress(percent, time_elapsed, got_data)
+                try:
+                    self.show_progress(percent, time_elapsed, got_data)
+                except:
+                    pass
 
                 done_percent = percent
                 got_data = 0
@@ -263,7 +266,10 @@ seconds, the Sender is yet not connected
             size_remaining -= var_buffer
 
         f.close()
-        self.show_progress(100)
+        try:
+            self.show_progress(100)
+        except:
+            pass
         if done == size:
             return True
         else:

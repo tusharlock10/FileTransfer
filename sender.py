@@ -322,7 +322,10 @@ seconds, the Receiver is yet not ready
 
             if percent != done_percent:
                 time_elapsed = time.time() - t
-                self.show_progress(percent, time_elapsed, got_data)
+                try:
+                    self.show_progress(percent, time_elapsed, got_data)
+                except:
+                    pass
 
                 done_percent = percent
                 got_data = 0
@@ -330,6 +333,10 @@ seconds, the Receiver is yet not ready
             size_remaining -= var_buffer
 
         f.close()
+        try:
+            self.show_progress(100)
+        except:
+            pass
         return True
 
     def send_files(self):
