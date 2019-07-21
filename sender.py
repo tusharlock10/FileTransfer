@@ -4,10 +4,8 @@ import sys
 import time
 import zlib
 from socket import *
-
 import tj
 
-__version__ = '1.0'
 
 try:
     dirname = os.path.dirname(sys.argv[0])
@@ -124,7 +122,12 @@ class Sender:
 
     @staticmethod
     def __validate_ip(ip):
+        print("This is the ipaddress entered: ", ip)
+        
         L = ip.split('.')
+        print("This is the L: ", L)
+        print("This is len(L)", len(L))
+        input()
         if len(L) != 4:
             msg = 'IP address should contain exactly 4 dots (.): '
             return False, msg

@@ -5,10 +5,9 @@ import time
 import zlib
 from random import randint
 from socket import *
-
 import tj
 
-__version__ = '1.0'
+
 
 dirname = os.path.dirname(sys.argv[0])
 if dirname != '': os.chdir(dirname)

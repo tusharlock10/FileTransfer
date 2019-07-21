@@ -2,11 +2,11 @@ import os
 import sys
 import tj
 
-#version 1.2
+__version__ = '0.2' #  Alpha version
 
 clear = "cls"
 if 'win32' not in sys.platform.lower(): clear = 'clear'
-c = tj.color_text
+c = tj.color_text   # just assigning tj.color_text function a smaller name 
 
 m1 = '     _  _             _  _ ___    '
 m2 = '    /  / \ |\ | |\ | |_ /   |     '
