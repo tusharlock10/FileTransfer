@@ -1,7 +1,8 @@
 import os
 import sys
-
 import tj
+
+#version 1.2
 
 clear = "cls"
 if 'win32' not in sys.platform.lower(): clear = 'clear'
