@@ -32,6 +32,13 @@ def full_exit():
 
 
 def help_receiving():
+    clear = "cls"
+    if 'win32' not in sys.platform.lower():
+        clear = 'clear'
+        clr = 'OLIVE'
+    else:
+        clr = 'BLACK'
+        
     help_string = f'''
         {c("                  ", background_color='WHITE')}
         {c("   * RECEIVER *   ", text_color=clr, background_color='WHITE', bold=True)}
@@ -44,13 +51,13 @@ This option will receive files from the sender.
  {c(f"""
 
  * Files will be received over LAN, so no internet will be used.
- * You and the Sender are connect to the same network, either 
+ * You and the Sender are connected to the same network, either 
     to the same Wifi or using Ethernet.
  * You have to tell your IP address and Port number to the Sender,
     by yourself.
  * All files received will be saved in the Received folder which have
     been created in the same director as this program.
-    (here - {dirname})""", text_color='YELLOW', bold=True)}
+    (here - {dirname}/{DIRECTORY})""", text_color='YELLOW', bold=True)}
 
  It is very easy and straight forward to receive files, Just 3 steps:
      %s'''
