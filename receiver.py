@@ -236,6 +236,7 @@ seconds, the Sender is yet not connected
     def get_file(self, filename, size):
         '''This function gets the file data from the sender'''
         dirname = os.path.dirname(filename)  # To make the directory of the file
+        print("This is the filename: ", filename, "      Dirname: ", dirname)
         os.makedirs(dirname, exist_ok=True)  # Makes the directory of the file
 
         size_remaining = size

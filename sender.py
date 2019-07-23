@@ -127,7 +127,6 @@ class Sender:
         L = ip.split('.')
         print("This is the L: ", L)
         print("This is len(L)", len(L))
-        input()
         if len(L) != 4:
             msg = 'IP address should contain exactly 4 dots (.): '
             return False, msg
